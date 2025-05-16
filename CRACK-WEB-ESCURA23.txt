@@ -1,0 +1,227 @@
+# CRAKER WB ECURA - EXTRATOR UNIVERSAL + MANUTENÇÃO AVANÇADA
+
+Add-Type -AssemblyName "System.Windows.Forms"
+
+function Mostrar-Menu {
+    Clear-Host
+    Write-Host "==============================================="
+    Write-Host " 🔎 EXTRATOR UNIVERSAL DE HTML + SISTEMA"
+    Write-Host "==============================================="
+    Write-Host "1. Extrair JSONs válidos de arquivos HTML"
+    Write-Host "2. Extrair blocos JSON não validados"
+    Write-Host "3. Procurar termos (nomes, emails, etc)"
+    Write-Host "4. Extrair dados comuns (nomes, datas, imagens)"
+    Write-Host "6. Pesquisa profunda no Bing"
+    Write-Host "7. Abrir nova janela PowerShell"
+    Write-Host "12. 🛠️ Menu de Manutenção do Sistema"
+    Write-Host "13. 🌐 Abrir navegador Tor"
+    Write-Host "14. 💬 Abrir ChatGPT em nova aba"
+    Write-Host "8. Sair"
+    Write-Host "-----------------------------------------------"
+}
+
+function Mostrar-Menu-Manutencao {
+    Clear-Host
+    Write-Host "======================================="
+    Write-Host " 🛠️ MENU DE MANUTENÇÃO DO SISTEMA"
+    Write-Host "======================================="
+    Write-Host "1. Reparar Windows (SFC / DISM)"
+    Write-Host "2. Ativar e verificar com Windows Defender"
+    Write-Host "3. Verificar atualizações do Windows"
+    Write-Host "4. Criar novo script PowerShell personalizado"
+    Write-Host "5. Voltar ao menu principal"
+    Write-Host "---------------------------------------"
+}
+
+function Escolher-Pasta {
+    $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+    $dialog.Description = "Selecione a pasta com os arquivos HTML"
+    if ($dialog.ShowDialog() -eq 'OK') {
+        return $dialog.SelectedPath
+    } else {
+        Write-Host "❌ Nenhuma pasta selecionada." -ForegroundColor Red
+        return $null
+    }
+}
+
+function Extrair-JSON-Valido {
+    $pasta = Escolher-Pasta
+    if (-not $pasta) { return }
+    $saida = "$env:USERPROFILE\Documents"
+    $arquivos = Get-ChildItem $pasta -Filter *.html
+    if (-not $arquivos) { Write-Host "⚠️ Nenhum arquivo HTML encontrado."; Pause; return }
+    $cont = 1
+    foreach ($f in $arquivos) {
+        $html = Get-Content $f.FullName -Raw
+        $regex = '(?s)(\{(?:[^{}]|(?<o>\{)|(?<-o>\}))*\}(?(o)(?!)))|(\[(?:[^\[\]]|(?<o>\[)|(?<-o>\]))*\](?(o)(?!)))'
+        $matches = [regex]::Matches($html, $regex)
+        foreach ($m in $matches) {
+            try {
+                $json = $m.Value.Trim() | ConvertFrom-Json -ErrorAction Stop
+                $m.Value | Out-File "$saida\json_valido_$cont.txt"
+                Write-Host "✅ JSON válido salvo: json_valido_$cont.txt"
+                $cont++
+            } catch {}
+        }
+    }
+    Pause
+}
+
+function Extrair-JSON-Possivel {
+    $pasta = Escolher-Pasta
+    if (-not $pasta) { return }
+    $saida = "$env:USERPROFILE\Documents"
+    $arquivos = Get-ChildItem $pasta -Filter *.html
+    if (-not $arquivos) { Write-Host "⚠️ Nenhum arquivo HTML encontrado."; Pause; return }
+    $cont = 1
+    foreach ($f in $arquivos) {
+        $html = Get-Content $f.FullName -Raw
+        $regex = '(?s)(\{(?:[^{}]|(?<o>\{)|(?<-o>\}))*\}(?(o)(?!)))|(\[(?:[^\[\]]|(?<o>\[)|(?<-o>\]))*\](?(o)(?!)))'
+        $matches = [regex]::Matches($html, $regex)
+        foreach ($m in $matches) {
+            $m.Value | Out-File "$saida\json_possivel_$cont.txt"
+            Write-Host "💾 JSON possível salvo: json_possivel_$cont.txt"
+            $cont++
+        }
+    }
+    Pause
+}
+
+function Procurar-Dados {
+    $pasta = Escolher-Pasta
+    if (-not $pasta) { return }
+    $termo = Read-Host "🔍 Termo a procurar"
+    foreach ($f in Get-ChildItem $pasta -Filter *.html) {
+        $html = Get-Content $f.FullName -Raw
+        $matches = Select-String -InputObject $html -Pattern $termo -AllMatches
+        if ($matches) {
+            Write-Host "`n🟢 Resultados em $($f.Name):"
+            $matches | ForEach-Object { $_.Line }
+        }
+    }
+    Pause
+}
+
+function Extrair-Dados-Comuns {
+    $pasta = Escolher-Pasta
+    if (-not $pasta) { return }
+    $saida = "$env:USERPROFILE\Documents\dados_extraidos.txt"
+    Remove-Item $saida -ErrorAction SilentlyContinue
+    $padroes = @{
+        "👤 Nome" = '"name"\s*:\s*"([^"]+)"'
+        "📧 Email" = '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,7}\b'
+        "🖼️ Imagem" = 'https?://[^"]+\.(jpg|jpeg|png|gif)'
+        "📅 Data" = '\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}'
+        "🔗 Link" = 'https?://[^\s"]+'
+        "📞 Telefone" = '\(?\d{2,3}\)?[\s.-]?\d{4,5}[\s.-]?\d{4}'
+    }
+    foreach ($f in Get-ChildItem $pasta -Filter *.html) {
+        $html = Get-Content $f.FullName -Raw
+        Add-Content $saida "===== $($f.Name) ====="
+        foreach ($chave in $padroes.Keys) {
+            $matches = [regex]::Matches($html, $padroes[$chave])
+            foreach ($m in $matches) {
+                Add-Content $saida "$chave: $($m.Groups[1].Value -replace '\s+', '')"
+            }
+        }
+        Add-Content $saida "`n"
+    }
+    Write-Host "`n✅ Dados salvos em: $saida"
+    Pause
+}
+
+# FUNCIONALIDADES ADICIONAIS
+
+function Pesquisa-Funda-Bing {
+    $q = Read-Host "🔎 Pesquisa no Bing"
+    Start-Process "https://www.bing.com/search?q=$([uri]::EscapeDataString($q))"
+    Pause
+}
+
+function Nova-Janela-PowerShell {
+    Start-Process powershell -ArgumentList "-NoExit"
+    Pause
+}
+
+function Reparar-Windows {
+    Start-Process powershell -Verb runAs -ArgumentList {
+        sfc /scannow
+        Dism /Online /Cleanup-Image /ScanHealth
+        Dism /Online /Cleanup-Image /RestoreHealth
+        Pause
+    }
+}
+
+function Ativar-WindowsDefender {
+    Start-Process powershell -Verb runAs -ArgumentList {
+        Set-MpPreference -DisableRealtimeMonitoring $false
+        Start-MpScan -ScanType FullScan
+        Pause
+    }
+}
+
+function Verificar-Atualizacoes {
+    Start-Process powershell -Verb runAs -ArgumentList {
+        UsoClient StartScan
+        UsoClient StartDownload
+        UsoClient StartInstall
+        Pause
+    }
+}
+
+function Adicionar-ScriptPersonalizado {
+    $nome = Read-Host "📄 Nome do script"
+    $codigo = Read-Host "✍️ Código do script (uma linha)"
+    $caminho = "$env:USERPROFILE\Documents\$nome.ps1"
+    $codigo | Out-File -FilePath $caminho -Encoding UTF8
+    Write-Host "✅ Script criado: $caminho"
+    Pause
+}
+
+function Abrir-Tor {
+    $tor = "C:\Program Files\Tor Browser\Browser\firefox.exe"
+    if (Test-Path $tor) {
+        Start-Process $tor
+    } else {
+        Write-Host "❌ Tor Browser não encontrado." -ForegroundColor Red
+    }
+    Pause
+}
+
+function Abrir-ChatGPT {
+    Start-Process "https://chat.openai.com"
+    Pause
+}
+
+# LOOP PRINCIPAL
+
+while ($true) {
+    Mostrar-Menu
+    $escolha = Read-Host "`n👉 Escolha uma opção (1-14)"
+    switch ($escolha) {
+        "1" { Extrair-JSON-Valido }
+        "2" { Extrair-JSON-Possivel }
+        "3" { Procurar-Dados }
+        "4" { Extrair-Dados-Comuns }
+        "6" { Pesquisa-Funda-Bing }
+        "7" { Nova-Janela-PowerShell }
+        "8" { Write-Host "`n👋 A sair..."; break }
+        "12" {
+            while ($true) {
+                Mostrar-Menu-Manutencao
+                $sub = Read-Host "`n🛠️ Opção manutenção (1-5)"
+                switch ($sub) {
+                    "1" { Reparar-Windows }
+                    "2" { Ativar-WindowsDefender }
+                    "3" { Verificar-Atualizacoes }
+                    "4" { Adicionar-ScriptPersonalizado }
+                    "5" { break }
+                    default { Write-Host "❌ Opção inválida." -ForegroundColor Red; Pause }
+                }
+            }
+        }
+        "13" { Abrir-Tor }
+        "14" { Abrir-ChatGPT }
+        default { Write-Host "❌ Opção inválida." -ForegroundColor Red; Pause }
+    }
+}
