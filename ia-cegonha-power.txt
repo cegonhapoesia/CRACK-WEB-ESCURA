@@ -1,0 +1,88 @@
+# MELHOR CODIGO IA CEGONHA## THE BEST TICHER STORK
+# IA Cegonha
+
+# Ícone da Cegonha
+Write-Host " 
+ /_/\ 
+( o.o ) 
+ > ^ < 
+ Olá! Eu sou a IA Cegonha!"
+
+# Base de conhecimento
+$conhecimento = @{}
+$historico = @{}
+$feedback = @{}
+
+# Função para aprender
+function Aprender {
+    param ($mensagem, $resposta)
+    $conhecimento[$mensagem.ToLower()] = $resposta
+    $historico[$mensagem.ToLower()] = $resposta
+}
+
+# Função para responder
+function Responder {
+    param ($mensagem)
+    $mensagem = $mensagem.ToLower()
+    if ($conhecimento.ContainsKey($mensagem)) {
+        return $conhecimento[$mensagem]
+    } else {
+        # Utilizar técnicas de aprendizado de máquina para gerar uma resposta
+        $resposta = GerarResposta $mensagem
+        Aprender $mensagem $resposta
+        return $resposta
+    }
+}
+
+# Função para gerar resposta
+function GerarResposta {
+    param ($mensagem)
+    # Utilizar API do Bing para buscar respostas
+    $url = "https://www.bing.com/search?q=$mensagem"
+    $response = Invoke-WebRequest -Uri $url -UseBasicParsing
+    $html = $response.Content
+    $resultado = [regex]::Matches($html, '<h2>.*?</h2>')
+    if ($resultado.Count -gt 0) {
+        return $resultado[0].Value
+    } else {
+        return "Desculpe, não sei responder a essa pergunta."
+    }
+}
+
+# Função para avaliar resposta
+function AvaliarResposta {
+    param ($mensagem, $resposta)
+    $avaliacao = Read-Host "Avalie a resposta (1-5): "
+    $feedback[$mensagem.ToLower()] = $avaliacao
+}
+
+# Loop principal
+while ($true) {
+    Write-Host "Opções:"
+    Write-Host "1. Falar com a IA Cegonha"
+    Write-Host "2. Realizar uma pesquisa no Bing"
+    Write-Host "3. Ver histórico de conversas"
+    Write-Host "4. Ver feedback de respostas"
+    $opcao = Read-Host "Escolha uma opção"
+
+    if ($opcao -eq "1") {
+        $mensagem = Read-Host "Você: "
+        $resposta = Responder $mensagem
+        Write-Host "Cegonha: $resposta"
+        AvaliarResposta $mensagem $resposta
+    } elseif ($opcao -eq "2") {
+        $query = Read-Host "Digite sua pesquisa: "
+        $url = "https://www.bing.com/search?q=$query"
+        Start-Process $url
+   } elseif ($opcao -eq "3") {
+    Write-Host "Histórico de conversas:"
+    foreach ($mensagem in $historico.Keys) {
+        Write-Host "${mensagem}: $($historico[$mensagem])"
+    }
+} elseif ($opcao -eq "4") {
+    Write-Host "Feedback de respostas:"
+    foreach ($mensagem in $feedback.Keys) {
+        Write-Host "${mensagem}: $($feedback[$mensagem])"
+    }
+}
+    }
