@@ -1,0 +1,134 @@
+
+
+#melhor código IA cegonha
+# MELHOR CODIGO IA CEGONHA## THE BEST TICHER STORK
+
+Write-Host " 
+ /_/\ 
+( o.o ) 
+ > ^ < 
+ Olá! Eu sou a IA Cegonha!"
+
+$conhecimento = @{}
+$historico = @{}
+$feedback = @{}
+
+$arquivoConhecimento = "conhecimento.json"
+$arquivoHistorico = "historico.json"
+$arquivoFeedback = "feedback.json"
+
+function CarregarConhecimento {
+    if (Test-Path $arquivoConhecimento) {
+        $json = Get-Content $arquivoConhecimento = $json
+    }
+    if (Test-Path $arquivoHistorico) {
+        $json = Get-Content $arquivoHistorico | ConvertFrom-Json
+        foreach ($prop in $json.PSObject.Properties) {
+            $historico[$prop.Name] = $prop.Value
+        }
+    }
+    if (Test-Path $arquivoFeedback) {
+        $json = Get-Content $arquivoFeedback | ConvertFrom-Json
+        foreach ($prop in $json.PSObject.Properties) {
+            $feedback[$prop.Name] = $prop.Value
+        }
+    }
+}
+
+function SalvarConhecimento {
+    $conhecimento.GetEnumerator() | ForEach-Object { @{ $_.Key = $_.Value } } | ConvertTo-Json | Set-Content $arquivoConhecimento
+    $historico.GetEnumerator() | ForEach-Object { @{ $_.Key = $_.Value } } | ConvertTo-Json | Set-Content $arquivoHistorico
+    $feedback.GetEnumerator() | ForEach-Object { @{ $_.Key = $_.Value } } | ConvertTo-Json | Set-Content $arquivoFeedback
+}
+
+function Aprender {
+    param ($mensagem, $resposta)
+    $conhecimento[$mensagem.ToLower()] = $resposta
+    $historico[$mensagem.ToLower()] = $resposta
+    SalvarConhecimento
+}
+
+function Responder {
+    param ($mensagem)
+    $mensagem = $mensagem.ToLower()
+    if ($conhecimento.ContainsKey($mensagem)) {
+        return $conhecimento[$mensagem]
+    } else {
+        $resposta = GerarResposta $mensagem
+        if ($resposta -ne "Erro ao gerar resposta.") {
+            Aprender $mensagem $resposta
+        }
+        return $resposta
+    }
+}
+
+function GerarResposta {
+    param ($mensagem)
+    try {
+        $url = "https://www.bing.com/search?q=$mensagem"
+        $response = Invoke-WebRequest -Uri $url -UseBasicParsing
+        $html = $response.Content
+        $resultado = [regex]::Matches($html, '<h2>.*?</h2>')
+        if ($resultado.Count -gt 0) {
+            return $resultado[0].Value
+        } else {
+            return "Desculpe, não sei responder a essa pergunta."
+        }
+    } catch {
+        return "Erro ao gerar resposta."
+    }
+}
+
+function AvaliarResposta {
+    param ($mensagem, $resposta)
+    Write-Host "Avalie a resposta:"
+    Write-Host "1. Muito boa"
+    Write-Host "2. Boa"
+    Write-Host "3. Regular"
+    Write-Host "4. Ruim"
+    Write-Host "5. Muito ruim"
+    $avaliacao = Read-Host "Escolha uma opção"
+    $feedback[$mensagem.ToLower()] = $avaliacao
+    SalvarConhecimento
+}
+
+CarregarConhecimento
+
+while ($true) {
+    Write-Host "Opções:"
+    Write-Host "1. Falar com a IA Cegonha"
+    Write-Host "2. Realizar uma pesquisa no Bing"
+    Write-Host "3. Ver histórico de conversas"
+    Write-Host "4. Ver feedback de respostas"
+    $opcao = Read-Host "Escolha uma opção"
+
+    if ($opcao -eq "1") {
+        $mensagem = Read-Host "Você: "
+        if (![string]::IsNullOrEmpty($mensagem)) {
+            $resposta = Responder $mensagem
+            Write-Host "Cegonha: $resposta"
+            AvaliarResposta $mensagem $resposta
+        } else {
+            Write-Host "Por favor, digite uma mensagem."
+        }
+    } elseif ($opcao -eq "2") {
+        $query = Read-Host "Digite sua pesquisa: "
+        $url = "https://www.bing.com/search?q=$query"
+        Start-Process $url
+    } elseif ($opcao -eq "3") {
+        Write-Host "Histórico de conversas:"
+        foreach ($mensagem in $historico.Keys) {
+            Write-Host "${mensagem}: $($historico[$mensagem])"
+        }
+    } elseif ($opcao -eq "4") {
+        Write-Host "Feedback de respostas:"
+        foreach ($mensagem in $feedback.Keys) {
+            Write-Host "${mensagem}: $($feedback[$mensagem])"
+        }
+    }
+}
+$conhecimento | ConvertTo-Json | Set-Content "conhecimento.json"
+
+$historico | ConvertTo-Json | Set-Content "historico.json"
+
+$feedback | ConvertTo-Json | Set-Content "feedback.json"
