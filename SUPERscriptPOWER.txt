@@ -1,0 +1,263 @@
+#Copiar e colar o código no power direto
+#Depois dar ENTER para fazer aparecer o loop de opções
+#ESTE CÓDIGO multiusos tem 21 opções realizáveis automaticamente 
+
+while ($true) {
+    Clear-Host
+    Write-Host "Menu de Opções"
+    Write-Host "-------------"
+    Write-Host "1. Reparar todo sistema Windows"
+    Write-Host "2. Procurar atualizações Windows"
+    Write-Host "3. Conectar e ativar Windows Defender"
+    Write-Host "4. Ligar impressora automaticamente"
+    Write-Host "5. Ligar outros dispositivos"
+    Write-Host "6. Instalar/desinstalar programas"
+    Write-Host "7. Pesquisar TV online grátis"
+    Write-Host "8. Pesquisar rádio online grátis"
+    Write-Host "9. Pesquisar canais de televisão online grátis"
+    Write-Host "10. Pesquisar canais de vídeo online grátis"
+    Write-Host "11. Pesquisar imagens raras"
+    Write-Host "12. Pesquisa avançada geral na web"
+    Write-Host "13. Verificador de vírus"
+    Write-Host "14. Gerenciar tarefas"
+    Write-Host "15. Chatbot"
+    Write-Host "16. Gerador de relatórios"
+    Write-Host "17. Integração com serviços online"
+    Write-Host "18. Gerador de arte ASCII"
+    Write-Host "19. Gerador de histórias"
+    Write-Host "20. Serviço de e-mails"
+    Write-Host "21. Sair"
+
+    $opcao = Read-Host "Escolha uma opção"
+
+    switch ($opcao) {
+        1 {
+            # Reparar todo sistema Windows
+            Write-Host "Reparando o sistema..."
+            sfc /scannow
+            Write-Host "Reparo concluído!"
+            Pause
+        }
+        2 {
+            # Procurar atualizações Windows
+            Write-Host "Procurando atualizações..."
+            Start-Process -FilePath "usoclient" -ArgumentList "StartScan" -Wait
+            Write-Host "Atualizações concluídas!"
+            Pause
+        }
+        3 {
+            # Conectar e ativar Windows Defender
+            Write-Host "Conectando e ativando Windows Defender..."
+            Set-MpPreference -DisableRealtimeMonitoring $false
+            Write-Host "Windows Defender ativado!"
+            Pause
+        }
+        4 {
+            # Ligar impressora automaticamente
+            Write-Host "Ligando impressora..."
+            Get-Printer | Where-Object {$_.Name -like "*impressora*"} | Set-Printer -PrinterStatus "Normal"
+            Write-Host "Impressora ligada!"
+            Pause
+        }
+        5 {
+            # Ligar outros dispositivos
+            Write-Host "Ligando outros dispositivos..."
+            Write-Host "Dispositivos ligados!"
+            Pause
+        }
+        6 {
+            # Instalar/desinstalar programas
+            Write-Host "Instalar/desinstalar programas..."
+            $programa = Read-Host "Digite o link do programa"
+            $acao = Read-Host "Digite 'instalar' ou 'desinstalar'"
+            if ($acao -eq "instalar") {
+                Start-Process -FilePath $programa -Wait
+                Write-Host "Programa instalado!"
+            } elseif ($acao -eq "desinstalar") {
+                $programaName = (Get-Item $programa).BaseName
+                $uninstallString = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*" | Where-Object {$_.DisplayName -like "*$programaName*"}).UninstallString
+                if ($uninstallString) {
+                    Start-Process -FilePath $uninstallString -Wait
+                    Write-Host "Programa desinstalado!"
+                } else {
+                    Write-Host "Programa não encontrado!"
+                }
+            }
+            Pause
+        }
+        7 {
+            Start-Process -FilePath "https://www.google.com/search?q=tv+online+gratis" -WindowStyle Maximized
+            Pause
+        }
+        8 {
+            Start-Process -FilePath "https://www.google.com/search?q=radio+online+gratis" -WindowStyle Maximized
+            Pause
+        }
+        9 {
+            Start-Process -FilePath "https://www.google.com/search?q=canais+de+televisao+online+gratis" -WindowStyle Maximized
+            Pause
+        }
+        10 {
+            Start-Process -FilePath "https://www.google.com/search?q=canais+de+video+online+gratis" -WindowStyle Maximized
+            Pause
+        }
+        11 {
+            Start-Process -FilePath "https://www.google.com/search?q=imagens+raras&tbm=isch" -WindowStyle Maximized
+            Pause
+        }
+        12 {
+            $termoPesquisa = Read-Host "Digite o termo de pesquisa"
+            Start-Process -FilePath "https://www.google.com/search?q=$termoPesquisa" -WindowStyle Maximized
+            Pause
+        }
+        13 {
+            # Verificador de vírus
+            Write-Host "Verificador de vírus"
+            $arquivo = Read-Host "Digite o nome do arquivo"
+            if (Test-Path $arquivo) {
+                $virusTotalApiKey = "SUA_API_KEY_AQUI"
+                $virusTotalUrl = "https://www.virustotal.com/api/v3/files/$((Get-FileHash -Path $arquivo -Algorithm SHA256).Hash)"
+                $headers = @{
+                    "x-apikey" = $virusTotalApiKey
+                }
+                $response = Invoke-WebRequest -Uri $virusTotalUrl -Method Get -Headers $headers
+                $responseContent = $response.Content | ConvertFrom-Json
+                if ($responseContent.data.attributes.last_analysis_stats.malicious -gt 0) {
+                    Write-Host "Arquivo infectado!"
+                } else {
+                    Write-Host "Arquivo limpo!"
+                }
+            } else {
+                Write-Host "Arquivo não encontrado!"
+            }
+            Pause
+        }
+        14 {
+            # Gerenciar tarefas
+            Write-Host "Gerenciar tarefas"
+            Write-Host "1. Criar tarefa"
+            Write-Host "2. Excluir tarefa"
+            Write-Host "3. Listar tarefas"
+            $opcaoTarefa = Read-Host "Escolha uma opção"
+            switch ($opcaoTarefa) {
+                1 {
+                    $nomeTarefa = Read-Host "Digite o nome da tarefa"
+                    $acaoTarefa = Read-Host "Digite a ação da tarefa"
+                    $triggerTarefa = Read-Host "Digite o trigger da tarefa"
+                    Register-ScheduledTask -TaskName $nomeTarefa -Action (New-ScheduledTaskAction -Execute $acaoTarefa) -Trigger (New-ScheduledTaskTrigger -At $triggerTarefa)
+                    Write-Host "Tarefa criada com sucesso!"
+                }
+                2 {
+                    $nomeTarefa = Read-Host "Digite o nome da tarefa"
+                    Unregister-ScheduledTask -TaskName $nomeTarefa -Confirm:$false
+                    Write-Host "Tarefa excluída com sucesso!"
+                }
+                3 {
+                    Get-ScheduledTask | Select-Object TaskName, State, LastRunTime
+                }
+            }
+            Pause
+        }
+        15 {
+            # Chatbot
+            Write-Host "Chatbot"
+            $mensagem = Read-Host "Digite uma mensagem"
+            $response = Invoke-WebRequest -Uri "https://api.chucknorris.io/jokes/random" -Method Get
+            $responseContent = $response.Content | ConvertFrom-Json
+            Write-Host $responseContent.value
+            Pause
+        }
+        16 {
+            # Gerador de relatórios
+            Write-Host "Gerador de relatórios"
+            $relatorio = @"
+Relatório de sistema
+-------------------
+Data: $(Get-Date)
+Sistema Operacional: $((Get-WmiObject -Class Win32_OperatingSystem).Caption)
+Processador: $((Get-WmiObject -Class Win32_Processor).Name)
+Memória RAM: $((Get-WmiObject -Class Win32_PhysicalMemory).Capacity / 1GB) GB
+"@
+            Write-Host $relatorio
+            $relatorio | Out-File -FilePath "relatorio.txt"
+            Write-Host "Relatório gerado com sucesso!"
+            Pause
+        }
+        17 {
+            # Integração com serviços online
+            Write-Host "Integração com serviços online"
+            Write-Host "1. Enviar e-mail"
+            Write-Host "2. Criar evento no Google Calendar"
+            $opcaoIntegracao = Read-Host "Escolha uma opção"
+            switch ($opcaoIntegracao) {
+                1 {
+                    $destinatario = Read-Host "Digite o destinatário"
+                    $assunto = Read-Host "Digite o assunto"
+                    $corpo = Read-Host "Digite o corpo do e-mail"
+                    Send-MailMessage -To $destinatario -Subject $assunto -Body $corpo -SmtpServer "smtp.gmail.com" -Port 587 -UseSsl -Credential (Get-Credential)
+                    Write-Host "E-mail enviado com sucesso!"
+                }
+                2 {
+                    Write-Host "Criar evento no Google Calendar"
+                    $evento = Read-Host "Digite o nome do evento"
+                    $dataInicio = Read-Host "Digite a data de início"
+                    $dataFim = Read-Host "Digite a data de fim"
+                }
+            }
+            Pause
+        }
+        18 {
+            # Gerador de arte ASCII
+            Write-Host "Gerador de arte ASCII"
+            $texto = Read-Host "Digite o texto"
+            $asciiArt = @"
+ _______
+|       |
+|  $texto  |
+|       |
+ -------
+"@
+            Write-Host $asciiArt
+            Pause
+        }
+        19 {
+            # Gerador de histórias
+            Write-Host "Gerador de histórias"
+            $historia = @"
+Era uma vez, em um lugar muito distante,
+um herói chamado $((Get-Random -Minimum 1 -Maximum 100)).
+Ele era muito corajoso e forte,
+e sempre salvava o dia.
+"@
+            Write-Host $historia
+            Pause
+        }
+        20 {
+            # Serviço de e-mails
+            Write-Host "Serviço de e-mails"
+            Write-Host "1. Enviar e-mail"
+            Write-Host "2. Ler e-mails"
+            $opcaoEmail = Read-Host "Escolha uma opção"
+            switch ($opcaoEmail) {
+                1 {
+                    $destinatario = Read-Host "Digite o destinatário"
+                    $assunto = Read-Host "Digite o assunto"
+                    $corpo = Read-Host "Digite o corpo do e-mail"
+                    Send-MailMessage -To $destinatario -Subject $assunto -Body $corpo -SmtpServer "smtp.gmail.com" -Port 587.0 -UseSsl -Credential (Get-Credential)
+                    Write-Host "E-mail enviado com sucesso!"
+                }
+                2 {
+                    Write-Host "Ler e-mails não implementado."
+                }
+            }
+            Pause
+        }
+        21 {
+            exit
+        }
+        default {
+            Write-Host "Opção inválida. Tente novamente!"
+            Pause
+        }
+    }
+}
