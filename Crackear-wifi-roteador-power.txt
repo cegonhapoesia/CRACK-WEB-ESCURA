@@ -1,0 +1,29 @@
+#ABRIR REDES WIFI E CRACKEAR O ROTEADOR REAL
+
+
+$redes = netsh wlan show networks mode=bssid | Where-Object { $_ -match "SSID" } | ForEach-Object { $_.Split(":")[1].Trim() }
+
+Add-Type -AssemblyName System.Windows.Forms
+$form = New-Object System.Windows.Forms.Form
+$form.Text = "Redes Wi-Fi Próximas"
+$form.Size = New-Object System.Drawing.Size(300, 400)
+$listBox = New-Object System.Windows.Forms.ListBox
+$listBox.Size = New-Object System.Drawing.Size(250, 300)
+$listBox.Location = New-Object System.Drawing.Point(20, 20)
+$form.Controls.Add($listBox)
+
+foreach ($rede in $redes) {
+    $listBox.Items.Add($rede)
+}
+
+$botaoAbrirRoteador = New-Object System.Windows.Forms.Button
+$botaoAbrirRoteador.Text = "Abrir Roteador"
+$botaoAbrirRoteador.Location = New-Object System.Drawing.Point(20, 330)
+$botaoAbrirRoteador.Size = New-Object System.Drawing.Size(100, 25)
+$botaoAbrirRoteador.Add_Click({
+    $defaultGateway = (Get-NetIPConfiguration | Where-Object { $_.IPv4DefaultGateway -ne $null }).IPv4DefaultGateway.NextHop
+    Start-Process "http://$defaultGateway"
+})
+$form.Controls.Add($botaoAbrirRoteador)
+
+$form.ShowDialog()
