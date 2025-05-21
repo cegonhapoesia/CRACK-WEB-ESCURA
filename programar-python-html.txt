@@ -1,0 +1,44 @@
+#programar python e html juntos no power
+#Exemplos python# print(2 + 2) # x = 5; y = 3; print(x * y)
+#exemplo html# <h1>seja feliz por favor</h1>
+
+while ($true) {
+    Write-Host "1. Executar código Python"
+    Write-Host "2. Executar código HTML (com Brython)"
+    Write-Host "3. Sair"
+    $escolha = Read-Host "Escolha uma opção"
+
+    switch ($escolha) {
+        1 {
+            $codigoPython = Read-Host "Digite o código Python"
+            try {
+                python -c $codigoPython
+            } catch {
+                Write-Host "Erro ao executar o código Python"
+            }
+        }
+        2 {
+            $codigoHtml = @"
+<html>
+<head>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/brython@3.9.0/dist/brython.min.js"></script>
+</head>
+<body onload="brython()">
+    {0}
+    <script type="text/python">
+        {1}
+    </script>
+</body>
+</html>
+"@ -f (Read-Host "Digite o código HTML"), (Read-Host "Digite o código Python para executar no HTML")
+            $codigoHtml | Out-File -FilePath temp.html
+            Start-Process -FilePath temp.html
+        }
+        3 {
+            exit
+        }
+        default {
+            Write-Host "Opção inválida. Tente novamente."
+        }
+    }
+}
