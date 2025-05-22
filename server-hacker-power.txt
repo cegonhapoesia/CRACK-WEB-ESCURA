@@ -1,0 +1,125 @@
+#Puxar pasta do site # Inserir arquivo html na pasta original do site
+
+
+
+# Menu de opções
+
+function Show-Menu {
+
+    Write-Host "Menu de Opções:"
+
+    Write-Host "1. Carregar HTML"
+
+    Write-Host "2. Abrir Pasta no Navegador"
+
+    Write-Host "3. Pesquisa Avançada no Bing"
+
+    Write-Host "4. Sair"
+
+}
+
+
+# Carregar HTML
+
+function Load-HTML {
+
+    # Crie um HTML básico
+
+    $html = @"
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <title>Olá Mundo</title>
+
+</head>
+
+<body>
+
+    <h1>Olá Mundo!</h1>
+
+</body>
+
+</html>
+
+"@
+
+
+    # Salve o HTML em um arquivo
+
+    $htmlFile = "index.html"
+
+    $html | Out-File -FilePath $htmlFile -Encoding UTF8
+
+
+    # Abra o arquivo no navegador padrão
+
+    Invoke-Item $htmlFile
+
+}
+
+
+# Abrir pasta no navegador
+
+function Open-Folder {
+
+    Add-Type -AssemblyName System.Windows.Forms
+
+    $folderBrowser = New-Object System.Windows.Forms.FolderBrowserDialog
+
+    $folderBrowser.Description = "Selecione uma pasta"
+
+    $folderBrowser.ShowDialog() | Out-Null
+
+    $folderPath = $folderBrowser.SelectedPath
+
+    if ($folderPath) {
+
+        Start-Process "file:///$folderPath"
+
+    } else {
+
+        Write-Host "Nenhuma pasta selecionada"
+
+    }
+
+}
+
+
+# Pesquisa avançada no Bing
+
+function Search-Bing {
+
+    $query = Read-Host "Digite sua pesquisa"
+
+    Start-Process "https://www.bing.com/search?q=$query"
+
+}
+
+
+# Loop infinito
+
+while ($true) {
+
+    Show-Menu
+
+    $option = Read-Host "Escolha uma opção"
+
+    switch ($option) {
+
+        1 { Load-HTML }
+
+        2 { Open-Folder }
+
+        3 { Search-Bing }
+
+        4 { exit }
+
+        default { Write-Host "Opção inválida" }
+
+    }
+
+}
