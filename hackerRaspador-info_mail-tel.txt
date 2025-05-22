@@ -1,0 +1,119 @@
+#CONTROL C copiar control v sacar conteudo
+#RASPA mails logins telefones etc
+
+do {
+
+    Clear-Host
+
+    Write-Host "Menu de Opções"
+
+    Write-Host "1. Inserir link pai"
+
+    Write-Host "2. Sair"
+
+    $opcao = Read-Host "Escolha uma opção"
+
+
+    switch ($opcao) {
+
+        1 {
+
+            $url = Read-Host "Insira o link pai"
+
+            try {
+
+                # Faz a requisição web
+
+                $conteudoWeb = Invoke-WebRequest -Uri $url
+
+
+                # Pega o conteúdo HTML
+
+                $html = $conteudoWeb.Content
+
+
+                # Extrai emails
+
+                $emails = [regex]::Matches($html, "\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b") | ForEach-Object {$_.Value}
+
+
+                # Extrai telefones
+
+                $telefones = [regex]::Matches($html, "\d{3}[-.]?\d{3}[-.]?\d{4}|\d{9}") | ForEach-Object {$_.Value}
+
+
+                # Extrai links
+
+                $links = $html | Select-String -Pattern "<a href="".*?""" -AllMatches | ForEach-Object {$_.Matches} | ForEach-Object {$_.Value}
+
+                $links = $links | ForEach-Object {$_ -replace "<a href=""","" -replace """",""}
+
+
+                # Extrai logins e usuários (pode não funcionar bem, pois depende da estrutura da página)
+
+                $logins = $html | Select-String -Pattern "login|username|user" -AllMatches | ForEach-Object {$_.Matches} | ForEach-Object {$_.Value}
+
+
+                # Cria objetos para exibir os resultados
+
+                $resultados = @(
+
+                    [PSCustomObject]@{Tipo = "Emails"; Valor = $emails -join ","}
+
+                    [PSCustomObject]@{Tipo = "Telefones"; Valor = $telefones -join ","}
+
+                    [PSCustomObject]@{Tipo = "Links"; Valor = $links -join ","}
+
+                    [PSCustomObject]@{Tipo = "Logins/Usuários"; Valor = $logins -join ","}
+
+                )
+
+
+                # Exibe os resultados em uma GridView
+
+                $resultados | Out-GridView -Title "Resultados da Pesquisa"
+
+
+                # Pergunta se deseja copiar os resultados
+
+                Write-Host "Deseja copiar os resultados? (s/n)"
+
+                $resposta = Read-Host
+
+                if ($resposta -eq "s") {
+
+                    $resultados | Out-String | Set-Clipboard
+
+                    Write-Host "Resultados copiados para a área de transferência!"
+
+                }
+
+            } catch {
+
+                Write-Host "Erro ao acessar o link: $($Error[0].Message)"
+
+                Pause
+
+            }
+
+        }
+
+        2 {
+
+            Write-Host "Saindo..."
+
+            exit
+
+        }
+
+        default {
+
+            Write-Host "Opção inválida. Tente novamente."
+
+            Pause
+
+        }
+
+    }
+
+} while ($true)
